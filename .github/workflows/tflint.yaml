@@ -1,0 +1,26 @@
+name: code-scanning-example
+
+on: pull_request
+
+jobs:
+  tflint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup tflint
+        uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: v0.57.0
+
+      - name: tflint
+        run: |
+          tflint --init
+          tflint --disable-rule=terraform_required_version --disable-rule=terraform_required_providers -f sarif > tflint-results.sarif
+
+      - name: Upload SARIF file
+        uses: github/codeql-action/upload-sarif@v3
+        if: success() || failure()
+        with:
+          sarif_file: "tflint-results.sarif"
